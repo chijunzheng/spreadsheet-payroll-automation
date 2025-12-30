@@ -22,11 +22,11 @@ Build a validation tool that compares raw punch data from a `.csv` file against 
 5. The system must compute expected paid times from the `.csv` using these rules:
 6. The system must treat early clock-in as rounding up to the next 30-minute boundary.
 7. The system must keep late clock-in as the actual punch-in time.
-8. The system must treat clock-out for lunch as the actual punch-out time or a rounding down to the previous 30-minute boundary.
+8. The system must treat clock-out for lunch as the actual punch-out time or a rounding up to the next 30-minute boundary when early.
 9. The system must enforce a 30-minute lunch break:
 10. The system must set early lunch return to exactly 30 minutes after lunch-out.
 11. The system must keep late lunch return as the actual punch-in time.
-12. The system must treat end-of-day clock-out as the actual punch-out time or a rounding down to the previous 30-minute boundary.
+12. The system must treat end-of-day clock-out as the actual punch-out time (no rounding).
 13. The system must allow the “no lunch punches” edge case: if the raw data has a single IN/OUT pair and the shift duration exceeds 6 hours, the system must accept a manually entered 30-minute lunch in the `.xlsx` as valid.
 14. The system must compare each expected time to the corresponding value in the `.xlsx`.
 15. The system must flag discrepancies and output them in a validation report.
@@ -34,6 +34,8 @@ Build a validation tool that compares raw punch data from a `.csv` file against 
 17. The system must locate each employee status cell in column `H` on the row where column `F` contains `Total` or `total`.
 18. The system must write `ok` to the status cell when no discrepancies exist for that employee, otherwise write `needs attention`.
 19. The system must output an updated `.xlsx` (copy) with status cells filled while leaving all time entry cells unchanged.
+20. The system must provide a user-friendly interface to upload the `.csv` and `.xlsx` without requiring command-line usage.
+21. The system must provide download links for both the validation report and the validated `.xlsx` output.
 
 ## Non-Goals (Out of Scope)
 - Automatically correcting or rewriting the timesheet time entries in the `.xlsx`.
@@ -41,7 +43,7 @@ Build a validation tool that compares raw punch data from a `.csv` file against 
 - Importing data from time clocks or HR systems beyond the provided files.
 
 ## Design Considerations (Optional)
-- A simple CLI with a path to the `.csv` and `.xlsx` is sufficient.
+- Provide a simple local web page for file upload and output download.
 - The validation report can be a `.csv` or `.xlsx` file with columns: employee, date, field, expected, actual, error_type.
 - The updated timesheet output should be saved as a new file (e.g., `*-validated.xlsx`) to avoid overwriting the original.
 

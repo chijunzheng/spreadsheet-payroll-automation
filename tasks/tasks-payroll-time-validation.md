@@ -7,6 +7,8 @@
 - `src/validator.py` - Core comparison logic and rounding/lunch rules.
 - `src/report.py` - Discrepancy report formatting and output.
 - `src/xlsx_writer.py` - Writes per-employee status cells into a validated XLSX copy.
+- `src/runner.py` - Shared validation runner used by both CLI and web UI.
+- `app.py` - Local web UI for file upload and result downloads.
 - `tests/test_csv_reader.py` - Unit tests for CSV parsing and grouping.
 - `tests/test_xlsx_reader.py` - Unit tests for XLSX extraction and normalization.
 - `tests/test_validator.py` - Unit tests for rounding rules and validation outcomes.
@@ -48,3 +50,8 @@
   - [x] 4.5 Write a validated XLSX copy with status cells set to `ok` or `needs attention`
   - [x] 4.6 Build CLI to run validation, write outputs, and print a summary
   - [x] 4.7 Add unit/integration tests for validation outcomes and status-cell writing
+- [x] 5.0 Add user-friendly upload UI
+  - [x] 5.1 Create a shared runner to reuse validation logic for CLI and UI
+  - [x] 5.2 Implement a local web server with a file upload form (CSV + XLSX)
+  - [x] 5.3 Save outputs to a run-specific folder and return download links
+  - [x] 5.4 Provide basic instructions on the page for non-CLI users
