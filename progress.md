@@ -30,6 +30,7 @@
 - Fixed HTML template formatting bug in the DMG web UI.
 - Added auto-port selection (8000–8010) to avoid “address already in use”.
 - Enforced the 30-minute lunch return rule when employees clock back in early; timesheet must reflect the enforced time.
+- Expanded start-time hint parsing to detect "Addj/Adj" notes (e.g., "Addj- 7:00am").
 
 ## Current Status / Failure
 - No known functional failures at the moment. All tests are passing.

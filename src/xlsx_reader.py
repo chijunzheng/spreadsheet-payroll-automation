@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import zipfile
 import xml.etree.ElementTree as ET
 from datetime import date
@@ -17,6 +18,27 @@ TIME_LABELS = {
     "Clock In (Work)": "lunch_in",
     "Clock Out": "clock_out",
 }
+
+START_HINT_RE = re.compile(r"(\d{1,2})(?::(\d{2}))?\s*(am|pm)?", re.IGNORECASE)
+START_HINT_KEYWORDS = ("in", "addj", "adj")
+WEEKDAY_HINTS = {
+    "monday": 0,
+    "mon": 0,
+    "tuesday": 1,
+    "tue": 1,
+    "tues": 1,
+    "wednesday": 2,
+    "wed": 2,
+    "thursday": 3,
+    "thu": 3,
+    "thur": 3,
+    "thurs": 3,
+    "friday": 4,
+    "fri": 4,
+    "saturday": 5,
+    "sat": 5,
+}
+DATE_HINT_RE = re.compile(r"(\d{1,2})[/-](\d{1,2})")
 
 
 def read_timesheet(
@@ -132,6 +154,7 @@ def _parse_sheet(
             )
 
         status_row = _find_status_row(cells, week_row + 2, week_row + 25)
+        start_time_hints = _find_start_time_hints(cells, status_row, dates_by_col)
         blocks.append(
             EmployeeBlock(
                 name=name,
@@ -139,6 +162,7 @@ def _parse_sheet(
                 dates_by_col=dates_by_col,
                 times_by_date=times_by_date,
                 status_row=status_row,
+                start_time_hints=start_time_hints,
             )
         )
     return blocks
@@ -218,6 +242,71 @@ def _find_status_row(
         value = cells.get((row, "F"))
         if isinstance(value, str) and value.strip().lower() == "total":
             return row
+    return None
+
+
+def _find_start_time_hints(
+    cells: Dict[tuple[int, str], object],
+    status_row: Optional[int],
+    dates_by_col: Dict[str, date],
+) -> Dict[Optional[date], int]:
+    if status_row is None:
+        return {}
+    hints: Dict[Optional[date], int] = {}
+    columns = [chr(code) for code in range(ord("A"), ord("H") + 1)]
+    for row in range(status_row - 4, status_row + 5):
+        for col in columns:
+            value = cells.get((row, col))
+            if not isinstance(value, str):
+                continue
+            parsed = _parse_start_hint(value, dates_by_col)
+            if parsed is None:
+                continue
+            hint_date, minutes = parsed
+            hints[hint_date] = minutes
+            return hints
+    return hints
+
+
+def _parse_start_hint(text: str, dates_by_col: Dict[str, date]) -> Optional[Tuple[Optional[date], int]]:
+    lowered = text.lower()
+    if not any(keyword in lowered for keyword in START_HINT_KEYWORDS) and "@" not in lowered:
+        return None
+    match = START_HINT_RE.search(lowered)
+    if not match:
+        return None
+    hour = int(match.group(1))
+    minute = int(match.group(2) or 0)
+    if hour > 12 or minute >= 60:
+        return None
+    meridiem = match.group(3)
+    if meridiem is None:
+        meridiem = "am"
+    if meridiem == "pm" and hour != 12:
+        hour += 12
+    if meridiem == "am" and hour == 12:
+        hour = 0
+    minutes = hour * 60 + minute
+
+    hint_date = _parse_hint_date(lowered, dates_by_col)
+    return hint_date, minutes
+
+
+def _parse_hint_date(text: str, dates_by_col: Dict[str, date]) -> Optional[date]:
+    for key, weekday in WEEKDAY_HINTS.items():
+        if re.search(rf"\\b{re.escape(key)}\\b", text):
+            for day in dates_by_col.values():
+                if day.weekday() == weekday:
+                    return day
+            break
+
+    match = DATE_HINT_RE.search(text)
+    if match:
+        month = int(match.group(1))
+        day_num = int(match.group(2))
+        for day in dates_by_col.values():
+            if day.month == month and day.day == day_num:
+                return day
     return None
 
 
