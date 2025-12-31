@@ -124,6 +124,39 @@ class ValidatorTests(unittest.TestCase):
         self.assertEqual(len(discrepancies), 0)
         self.assertEqual(status_by_row.get(30), "ok")
 
+    def test_early_lunch_return_is_not_allowed(self) -> None:
+        day = date(2025, 12, 26)
+        punches = {
+            ("francisco quiroga reyes", day): DailyPunches(
+                employee_name="Francisco Quiroga Reyes",
+                employee_key="francisco quiroga reyes",
+                date=day,
+                segments=[
+                    PunchSegment(in_minutes=5 * 60 + 52, out_minutes=13 * 60 + 55),
+                    PunchSegment(in_minutes=14 * 60 + 18, out_minutes=17 * 60 + 4),
+                ],
+            )
+        }
+        recorded = RecordedTimes(
+            clock_in=5 * 60 + 52,
+            lunch_out=13 * 60 + 55,
+            lunch_in=14 * 60 + 18,
+            clock_out=17 * 60 + 4,
+        )
+        block = EmployeeBlock(
+            name="Francisco Quiroga Reyes",
+            key="francisco quiroga reyes",
+            dates_by_col={},
+            times_by_date={day: recorded},
+            status_row=32,
+        )
+
+        discrepancies, status_by_row = validate([block], punches)
+        self.assertEqual(status_by_row.get(32), "needs attention")
+        self.assertTrue(
+            any(d.field == "clock_in_work" and d.error_type == "mismatch" for d in discrepancies)
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

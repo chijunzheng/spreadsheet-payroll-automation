@@ -228,11 +228,7 @@ def _compare_times(
             employee_name,
             day,
             "clock_in_work",
-            _allowed_values(
-                raw_times.lunch_in,
-                expected.lunch_in,
-                _enforced_lunch_in(raw_times),
-            ),
+            _allowed_lunch_in(raw_times, expected),
             recorded.lunch_in,
         )
     has_issue |= _compare_field(
@@ -347,6 +343,20 @@ def _enforced_lunch_in(raw_times: RecordedTimes) -> Optional[int]:
     if raw_times.lunch_out is None or raw_times.lunch_in is None:
         return None
     return max(raw_times.lunch_in, raw_times.lunch_out + 30)
+
+
+def _allowed_lunch_in(raw_times: RecordedTimes, expected: ExpectedTimes) -> list[Optional[int]]:
+    values: list[Optional[int]] = []
+    if raw_times.lunch_out is None or raw_times.lunch_in is None:
+        values.extend([raw_times.lunch_in, expected.lunch_in, _enforced_lunch_in(raw_times)])
+        return values
+
+    min_return = raw_times.lunch_out + 30
+    if raw_times.lunch_in >= min_return:
+        values.append(raw_times.lunch_in)
+    values.append(expected.lunch_in)
+    values.append(max(raw_times.lunch_in, min_return))
+    return values
 
 
 def _build_name_index(
