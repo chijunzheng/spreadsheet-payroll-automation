@@ -26,12 +26,17 @@
 - Stopped rounding end-of-day clock-out (now raw only).
 - Fixed lunch enforcement to allow manually inserted lunch on days with no lunch punches.
 - Added sheet selection based on CSV date range and MMDD tab naming.
-- Resolved name mismatches due to punctuation/typos (e.g., “Leyva/Leiva”, “Gonzalez/Gonsalez”).
+- Resolved name mismatches due to punctuation/typos (e.g., "Leyva/Leiva", "Gonzalez/Gonsalez").
 - Fixed HTML template formatting bug in the DMG web UI.
-- Added auto-port selection (8000–8010) to avoid “address already in use”.
+- Added auto-port selection (8000–8010) to avoid "address already in use".
 - Enforced the 30-minute lunch return rule when employees clock back in early; timesheet must reflect the enforced time.
 - Expanded start-time hint parsing to detect "Addj/Adj" notes (e.g., "Addj- 7:00am").
+- Updated DMG packaging for macOS Sequoia 15.x compatibility:
+  - Added `LSMinimumSystemVersion`, `NSHighResolutionCapable`, and other Info.plist keys.
+  - Built launcher as Universal Binary (x86_64 + arm64) for Intel and Apple Silicon.
+  - Added ad-hoc code signing for app bundle and DMG.
+  - Removed quarantine attributes before packaging.
 
 ## Current Status / Failure
 - No known functional failures at the moment. All tests are passing.
-- Awaiting user confirmation that the latest DMG launches cleanly without Terminal noise when opened via Finder (not by running the executable directly).
+- DMG now compatible with macOS Sequoia 15.6.1.

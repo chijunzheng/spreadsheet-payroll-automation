@@ -36,6 +36,14 @@ cat > "$APP_CONTENTS/Info.plist" <<'PLIST'
     <string>PayrollTimesheetValidator</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>10.15</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.business</string>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
   </dict>
 </plist>
 PLIST
@@ -102,7 +110,9 @@ int main(int argc, char *argv[]) {
 }
 CFILE
 
-clang -O2 -o "$APP_CONTENTS/MacOS/PayrollTimesheetValidator" "$LAUNCHER_SRC"
+# Build Universal Binary for both Intel and Apple Silicon
+clang -O2 -arch x86_64 -arch arm64 -mmacosx-version-min=10.15 \
+  -o "$APP_CONTENTS/MacOS/PayrollTimesheetValidator" "$LAUNCHER_SRC"
 
 python3 "$ROOT_DIR/scripts/make_icon.py"
 BASE_ICON="$ROOT_DIR/assets/icon.png"
@@ -123,6 +133,11 @@ iconutil -c icns "$ICONSET_DIR" -o "$ICON_ICNS"
 rsync -a --delete "$ROOT_DIR/app.py" "$APP_RESOURCES/"
 rsync -a --delete "$ROOT_DIR/src" "$APP_RESOURCES/"
 
+# Ad-hoc code sign the app bundle for macOS Sequoia compatibility
+# This allows the app to run without being blocked by Gatekeeper
+codesign --force --deep --sign - "$APP_BUNDLE"
+echo "App bundle signed with ad-hoc signature"
+
 rm -rf "$DMG_STAGE"
 mkdir -p "$DMG_STAGE"
 cp -R "$APP_BUNDLE" "$DMG_STAGE/"
@@ -133,5 +148,16 @@ if [ -f "$DMG_PATH" ]; then
   rm "$DMG_PATH"
 fi
 
+# Remove quarantine attributes from the staged app
+xattr -cr "$DMG_STAGE/$APP_NAME.app" 2>/dev/null || true
+
 hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGE" -ov -format UDZO "$DMG_PATH"
+
+# Sign the DMG itself for added compatibility
+codesign --force --sign - "$DMG_PATH" 2>/dev/null || true
+
 echo "DMG created at: $DMG_PATH"
+echo ""
+echo "Note for macOS Sequoia users:"
+echo "  If the app is blocked, right-click and select 'Open' the first time,"
+echo "  or run: xattr -cr '/Applications/$APP_NAME.app'"

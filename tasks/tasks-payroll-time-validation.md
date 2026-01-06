@@ -55,3 +55,8 @@
   - [x] 5.2 Implement a local web server with a file upload form (CSV + XLSX)
   - [x] 5.3 Save outputs to a run-specific folder and return download links
   - [x] 5.4 Provide basic instructions on the page for non-CLI users
+- [x] 6.0 Update DMG packaging for macOS Sequoia compatibility
+  - [x] 6.1 Add LSMinimumSystemVersion and NSHighResolutionCapable to Info.plist
+  - [x] 6.2 Build launcher as Universal Binary (x86_64 + arm64)
+  - [x] 6.3 Add ad-hoc code signing for app bundle and DMG
+  - [x] 6.4 Remove quarantine attributes before packaging
